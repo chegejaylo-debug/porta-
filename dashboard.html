@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wambugu Farm KSA – Student & Farm Dashboard</title>
+
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Roboto',sans-serif;}
+body{background:#f4f6f8;color:#333;display:flex;min-height:100vh;}
+a{text-decoration:none;color:#333;}
+
+/* Sidebar */
+.sidebar{width:80px;background:#1f2a38;display:flex;flex-direction:column;align-items:center;padding-top:20px;transition:width 0.3s;}
+.sidebar:hover{width:220px;}
+.sidebar a{width:100%;display:flex;align-items:center;padding:15px;font-size:1rem;color:#fff;transition:0.3s;white-space:nowrap;overflow:hidden;}
+.sidebar a i{margin-right:10px;min-width:30px;text-align:center;}
+.sidebar a:hover{background:#334455;border-left:4px solid #007bff;}
+.sidebar a.active{background:#334455;border-left:4px solid #007bff;}
+
+/* Content */
+.content{flex:1;padding:20px;display:flex;flex-direction:column;gap:20px;overflow-y:auto;}
+
+/* Header */
+.header{display:flex;justify-content:space-between;align-items:center;}
+.header h1{font-size:1.6rem;color:#1f2a38;}
+
+/* Stats Cards */
+.stats{display:flex;gap:20px;flex-wrap:wrap;}
+.stats .card{flex:1 1 150px;text-align:center;border-radius:10px;padding:20px;background:#fff;color:#333;border:1px solid #ccc;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+
+/* Panels */
+.panel{background:#fff;border:1px solid #ccc;border-radius:10px;padding:20px;display:none;}
+.panel.active{display:block;}
+
+/* Tabs inside Students Panel */
+.tab-buttons{display:flex;gap:10px;margin-bottom:10px;}
+.tab-buttons button{padding:8px 15px;border:none;background:#007bff;color:#fff;border-radius:5px;cursor:pointer;transition:0.3s;}
+.tab-buttons button.active{background:#0056b3;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* Tables */
+table{width:100%;border-collapse:collapse;margin-top:10px;}
+th, td{border:1px solid #ccc;padding:8px;text-align:center;}
+thead{background:#e9ecef;}
+tbody tr:hover{background:#f1f3f5;}
+
+/* Buttons */
+.btn{font-weight:bold;border:none;border-radius:5px;padding:5px 10px;cursor:pointer;transition:0.3s;}
+.btn-success{background:#28a745;color:#fff;}
+.btn-danger{background:#dc3545;color:#fff;}
+
+footer{text-align:center;padding:10px;margin-top:20px;color:#555;}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <a href="#" class="active" onclick="showSection('dashboard')"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+    <a href="#" onclick="showSection('students')"><i class="fas fa-user-graduate"></i> Students</a>
+    <a href="#" onclick="showSection('crops')"><i class="fas fa-seedling"></i> Crops</a>
+    <a href="#" onclick="showSection('workers')"><i class="fas fa-tractor"></i> Workers</a>
+    <a href="#" onclick="showSection('alerts')"><i class="fas fa-bell"></i> Alerts</a>
+    <a href="#" onclick="showSection('messages')"><i class="fas fa-envelope"></i> Messages</a>
+</div>
+
+<!-- Main Content -->
+<div class="content">
+    <div class="header">
+        <h1>Wambugu Farm KSA – Student & Farm Dashboard</h1>
+        <div id="datetime"></div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="panel active">
+        <div class="stats">
+            <div class="card"><h5>Total Students</h5><p id="totalStudents">0</p></div>
+            <div class="card"><h5>Average Grade</h5><p id="avgGrade">0</p></div>
+            <div class="card"><h5>Attendance %</h5><p id="attendanceRate">0%</p></div>
+            <div class="card"><h5>Total Crops</h5><p id="totalCrops">0</p></div>
+            <div class="card"><h5>Total Workers</h5><p id="totalWorkers">0</p></div>
+            <div class="card"><h5>AI Alerts</h5><p id="aiAlerts">0</p></div>
+        </div>
+        <canvas id="trendChart" style="margin-top:20px;"></canvas>
+    </div>
+
+    <!-- Students -->
+    <div id="students" class="panel">
+        <h2>Students</h2>
+        <div class="tab-buttons">
+            <button class="active" onclick="switchTab('grades')">Grades</button>
+            <button onclick="switchTab('attendance')">Attendance</button>
+            <button onclick="switchTab('assignments')">Assignments</button>
+        </div>
+        <div id="grades" class="tab-content active">
+            <table id="studentsTable">
+                <thead><tr><th>ID</th><th>Name</th><th>Grade</th><th>Status</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div id="attendance" class="tab-content">
+            <table id="attendanceTable">
+                <thead><tr><th>ID</th><th>Name</th><th>Attendance %</th><th>Status</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div id="assignments" class="tab-content">
+            <table id="assignmentsTable">
+                <thead><tr><th>ID</th><th>Name</th><th>Assignment</th><th>Score</th><th>Status</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Crops -->
+    <div id="crops" class="panel">
+        <h2>Crops</h2>
+        <table id="cropsTable">
+            <thead><tr><th>ID</th><th>Crop</th><th>Expected Yield</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Workers -->
+    <div id="workers" class="panel">
+        <h2>Workers</h2>
+        <table id="workersTable">
+            <thead><tr><th>ID</th><th>Name</th><th>Task</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Alerts -->
+    <div id="alerts" class="panel">
+        <h2>AI Alerts</h2>
+        <div id="alertsList"></div>
+    </div>
+
+    <!-- Messages -->
+    <div id="messages" class="panel">
+        <h2>Messages</h2>
+        <div id="messagesList">No messages yet.</div>
+    </div>
+</div>
+
+<footer>
+  Wambugu Farm KSA – Student & Farm Dashboard | Version 1.0 | System ID: WF-KSA-001
+</footer>
+
+<script>
+function showSection(id){
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active'));
+    document.querySelector(`.sidebar a[onclick="showSection('${id}')"]`).classList.add('active');
+}
+
+// Date/Time
+function updateDateTime(){ document.getElementById('datetime').innerText = new Date().toLocaleString(); }
+setInterval(updateDateTime,1000); updateDateTime();
+
+// Sample Data
+let students=[{id:'S001',name:'John Doe',grade:85,attendance:95,assignment:'Report A',score:80},
+              {id:'S002',name:'Mary Jane',grade:88,attendance:90,assignment:'Report B',score:85}];
+let crops=[{id:'C001',crop:'Maize',expected:100,status:'On Track'},
+           {id:'C002',crop:'Tomatoes',expected:200,status:'Delayed'}];
+let workers=[{id:'W001',name:'Peter K',task:'Harvest',status:'On Track'},
+             {id:'W002',name:'Lucy M',task:'Irrigation',status:'Behind'}];
+
+function renderData(){
+    // Students Table
+    const tbody=document.querySelector('#studentsTable tbody'); tbody.innerHTML='';
+    students.forEach(s=>{ tbody.innerHTML+=`<tr><td>${s.id}</td><td>${s.name}</td><td>${s.grade}</td><td>${s.grade>=80?'Passed':'Warning'}</td></tr>`; });
+    
+    const tbodyAttendance=document.querySelector('#attendanceTable tbody'); tbodyAttendance.innerHTML='';
+    students.forEach(s=>{ tbodyAttendance.innerHTML+=`<tr><td>${s.id}</td><td>${s.name}</td><td>${s.attendance}%</td><td>${s.attendance>=80?'Good':'Warning'}</td></tr>`; });
+
+    const tbodyAssign=document.querySelector('#assignmentsTable tbody'); tbodyAssign.innerHTML='';
+    students.forEach(s=>{ tbodyAssign.innerHTML+=`<tr><td>${s.id}</td><td>${s.name}</td><td>${s.assignment}</td><td>${s.score}</td><td>${s.score>=80?'Passed':'Warning'}</td></tr>`; });
+
+    // Crops Table
+    const tbodyCrops=document.querySelector('#cropsTable tbody'); tbodyCrops.innerHTML='';
+    crops.forEach(c=>{ tbodyCrops.innerHTML+=`<tr><td>${c.id}</td><td>${c.crop}</td><td>${c.expected}</td><td>${c.status}</td></tr>`; });
+
+    // Workers Table
+    const tbodyWorkers=document.querySelector('#workersTable tbody'); tbodyWorkers.innerHTML='';
+    workers.forEach(w=>{ tbodyWorkers.innerHTML+=`<tr><td>${w.id}</td><td>${w.name}</td><td>${w.task}</td><td>${w.status}</td></tr>`; });
+
+    // AI Alerts
+    let alerts=''; let alertCount=0;
+    students.forEach(s=>{ if(s.grade<80){ alerts+=`⚠️ ${s.name} may need tutoring.<br>`; alertCount++; }});
+    students.forEach(s=>{ if(s.attendance<80){ alerts+=`⚠️ ${s.name} low attendance.<br>`; alertCount++; }});
+    workers.forEach(w=>{ if(w.status==='Behind'){ alerts+=`⚠️ ${w.name} task delayed.<br>`; alertCount++; }});
+    crops.forEach(c=>{ if(c.status==='Delayed'){ alerts+=`⚠️ ${c.crop} yield delayed.<br>`; alertCount++; }});
+    document.getElementById('alertsList').innerHTML=alerts || 'All systems operational.';
+    document.getElementById('aiAlerts').innerText=alertCount;
+
+    // Dashboard Stats
+    document.getElementById('totalStudents').innerText=students.length;
+    document.getElementById('avgGrade').innerText=(students.reduce((a,b)=>a+b.grade,0)/students.length).toFixed(1);
+    document.getElementById('attendanceRate').innerText=(students.reduce((a,b)=>a+b.attendance,0)/students.length).toFixed(1)+'%';
+    document.getElementById('totalCrops').innerText=crops.length;
+    document.getElementById('totalWorkers').innerText=workers.length;
+}
+renderData();
+
+// Tabs in Students Panel
+function switchTab(tab){ document.querySelectorAll('.tab-content').forEach(tc=>tc.classList.remove('active'));
+document.getElementById(tab).classList.add('active'); document.querySelectorAll('.tab-buttons button').forEach(b=>b.classList.remove('active'));
+event.currentTarget.classList.add('active'); }
+
+// Chart.js Trends
+const ctx = document.getElementById('trendChart').getContext('2d');
+const trendChart = new Chart(ctx,{
+    type:'line',
+    data:{
+        labels:['Week1','Week2','Week3','Week4','Week5','Week6'],
+        datasets:[
+            {label:'Average Grade', data:[82,85,83,87,88,89], borderColor:'#28a745', backgroundColor:'rgba(40,167,69,0.2)', tension:0.4, fill:true, pointRadius:5},
+            {label:'Attendance %', data:[92,90,91,89,93,94], borderColor:'#007bff', backgroundColor:'rgba(0,123,255,0.2)', tension:0.4, fill:true, pointRadius:5},
+            {label:'Crop Yield', data:[50,70,65,90,80,95], borderColor:'#ffc107', backgroundColor:'rgba(255,193,7,0.2)', tension:0.4, fill:true, pointRadius:5}
+        ]
+    },
+    options:{responsive:true, plugins:{legend:{labels:{color:'#333'}}}, scales:{x:{ticks:{color:'#333'}}, y:{ticks:{color:'#333'}}}}
+});
+</script>
+
+</body>
+</html>
